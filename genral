@@ -1,0 +1,25 @@
+commands and code that used
+
+txt file that will host the IP address:
+stored on ubuntu that will host conataner for the file
+
+docker file to create the server that will host the file:
+
+# Use a lightweight Python image
+FROM python:3.9-slim
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the malicious IPs file to the container
+COPY malicious_ips.txt /app/malicious_ips.txt
+
+# Expose port 8080
+EXPOSE 8080
+
+# Start a Python web server that serves files from /app
+CMD ["python", "-m", "http.server", "8080"]
+
+build with command:
+
+docker build -t ip-blocklist-server .
