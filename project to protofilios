@@ -1,2 +1,40 @@
-Make a Blcklist file that update Forti firewall on bad IP (automation to add IP to block in Forti) 
-its possible at Firewall Poilcy just create one with url to the file 
+Summary: Building an IP Reputation System Using Honeypot, Wazuh, and Fortigate
+Set Up Honeypot
+
+Deploy a honeypot on cloud(e.g., Cowrie, Dionaea) to capture malicious IPs.
+Ensure logging is configured to record incoming malicious activity.
+Extract Malicious IPs
+
+Write a Python script to parse honeypot logs and extract malicious IP addresses.
+Automate the script using cron or another task scheduler to run regularly.
+Feed IPs into Wazuh
+
+Configure Wazuh to monitor the file containing the extracted IPs.
+Create custom Wazuh rules to alert when malicious IPs are detected.
+Check IP Reputation
+
+Use a threat intelligence API (e.g., AbuseIPDB, VirusTotal) to validate the reputation of the extracted IPs.
+Update the file with IPs confirmed as malicious.
+Block IPs in Fortigate
+
+Write a script that uses Fortigate’s API or CLI to block the malicious IPs dynamically.
+Automate this process so new IPs are added to the firewall’s blocklist regularly.
+Integrate Everything
+
+Ensure Wazuh triggers the Fortigate block script when a new malicious IP is detected.
+Test the entire system to confirm that malicious IPs are detected and blocked.
+Logging and Monitoring
+
+Implement logging in your scripts to track blocked IPs and actions.
+Use Wazuh dashboards to visualize blocked IPs and system status.
+Document the Project
+
+Include code snippets, architecture diagrams, and screenshots.
+Optionally, create a video demo to showcase the project for your portfolio.
+Technologies Involved:
+Honeypot (e.g., Cowrie, Dionaea)
+Python for scripting
+Wazuh SIEM for monitoring and alerting
+Fortigate API or CLI for firewall management
+Threat Intelligence APIs (e.g., AbuseIPDB)
+By following these steps, you’ll demonstrate skills in security automation, SIEM integration, and firewall management. Let me know if you need more help with any of the steps!
