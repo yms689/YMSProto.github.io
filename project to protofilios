@@ -1,4 +1,5 @@
-Summary: Building an IP Reputation System Using Honeypot, Wazuh, and Fortigate
+Summary: 
+Building an IP Reputation System Using Honeypot, Wazuh, and Fortigate
 Set Up Honeypot
 
 Deploy a honeypot on cloud(e.g., Cowrie, Dionaea) to capture malicious IPs.
@@ -31,6 +32,8 @@ Document the Project
 
 Include code snippets, architecture diagrams, and screenshots.
 Optionally, create a video demo to showcase the project for your portfolio.
+
+
 Technologies Involved:
 Honeypot (e.g., Cowrie, Dionaea)
 Python for scripting
