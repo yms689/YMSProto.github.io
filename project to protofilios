@@ -1,1 +1,2 @@
 Make a Blcklist file that update Forti firewall on bad IP (automation to add IP to block in Forti) 
+its possible at Firewall Poilcy just create one with url to the file 
