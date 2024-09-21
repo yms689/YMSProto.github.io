@@ -23,3 +23,11 @@ CMD ["python", "-m", "http.server", "8080"]
 build with command:
 
 docker build -t ip-blocklist-server .
+
+run the container 
+
+docker run ip-blocklist-server
+
+after that create the Policy in forti to block the the policy name is Protect with Threat Feed
+
+got the file hosted on the docker and part from active rule now to the Wzuh.
