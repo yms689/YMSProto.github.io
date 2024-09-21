@@ -99,7 +99,8 @@ if __name__ == "__main__":
 at this point we need to make sure that we are detecting logs by the rule ,
 !make sure to update malicious_ip tag at the rule!
 
-Created Tpot:
+Created Tpot at cloud end:
 used this for honey pot https://github.com/telekom-security/tpotce?tab=readme-ov-file#choose-your-distro
 
-set up on aws cloud
+The goal here is to traffic logs from honeypot at cloud env with Wazuh agent insatll (Remember to add the firewall rules both on forti and at cloud)
+
