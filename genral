@@ -124,11 +124,12 @@ I used tunnel with ssh to make the wazuh collecnt events from the Tpot with
 
 ssh -R 1514:localhost:1514 Pita@74.235.109.213 -p 64295
 
-now need to make sure wazuh agent getting the IP address and the activti is making the commands
-
+*now need to make sure wazuh agent getting the IP address
 -------------------------------------------------------------------------------------------------------------------
+
 The goal here is to traffic logs from honeypot at cloud env with Wazuh agent insatll (Remember to add the firewall rules both on forti and at cloud)
 
+so after making sure Wazuh is collected the IP and alert on them I need to preform this to fille the text file!
 Monitor the Python Script Output
 Ensure your Python script logs actions or prints results when it runs. If you’ve added a log or print statement to output the IP being processed, you can see this output in:
 
