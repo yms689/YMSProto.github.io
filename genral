@@ -121,10 +121,6 @@ Before insatll make this conf:
 4.Berfore reboot make sure you able to conenct via ssh at 64295!
 then reboot!
 
-used this for honey pot https://github.com/telekom-security/tpotce?tab=readme-ov-file#choose-your-distro
-
-insatll the Wazuh agent on tpot:
-since we use firewall for the wazuh make sure to setp up the firewall with neccesry ports on the cloud.
 
 -------------------------------------------------------------------------------------------------------------------
 The goal here is to traffic logs from honeypot at cloud env with Wazuh agent insatll (Remember to add the firewall rules both on forti and at cloud)
