@@ -120,7 +120,11 @@ Before insatll make this conf:
 3. verify connection!
 4.Berfore reboot make sure you able to conenct via ssh at 64295!
 then reboot!
+I used tunnel with ssh to make the wazuh collecnt events from the Tpot with
 
+ssh -R 1514:localhost:1514 Pita@74.235.109.213 -p 64295
+
+now need to make sure wazuh agent getting the IP address and the activti is making the commands
 
 -------------------------------------------------------------------------------------------------------------------
 The goal here is to traffic logs from honeypot at cloud env with Wazuh agent insatll (Remember to add the firewall rules both on forti and at cloud)
