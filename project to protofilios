@@ -100,3 +100,7 @@ This setup will ensure your malicious_ips.txt file is updated every day with uni
 
 getting csv files for ioc and this is atuomated job that update the ip list to container and its update daily,
 next creat Wazug rule
+
+I will use Apache Directory Studio,
+just wonder if I can join domain a ubuntu that I have, and how do I grant local admin to users and limit access
+and it does. 
