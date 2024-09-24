@@ -1,43 +1,98 @@
-Summary: 
-Building an IP Reputation System Using Honeypot, Wazuh, and Fortigate
-Set Up Honeypot
+To ensure that the Docker container updates the malicious_ips.txt file every time it finds a file with the .csv extension, you can modify the update_ips.py script to process only files ending with .csv. Additionally, you'll run the container using the name ioc-server. Here’s how you can set everything up:
 
-Deploy a honeypot on cloud(e.g., Cowrie, Dionaea) to capture malicious IPs.
-Ensure logging is configured to record incoming malicious activity.
-Extract Malicious IPs
+Step 1: Update the Dockerfile (if not already done)
+Make sure your Dockerfile looks like this (including the update_ips.py script):
 
-Write a Python script to parse honeypot logs and extract malicious IP addresses.
-Automate the script using cron or another task scheduler to run regularly.
-Feed IPs into Wazuh
+Dockerfile:
 
-Configure Wazuh to monitor the file containing the extracted IPs.
-Create custom Wazuh rules to alert when malicious IPs are detected.
-Check IP Reputation
+dockerfile
+Copy code
+# Use a lightweight Python image
+FROM python:3.9-slim
 
-Use a threat intelligence API (e.g., AbuseIPDB, VirusTotal) to validate the reputation of the extracted IPs.
-Update the file with IPs confirmed as malicious.
-Block IPs in Fortigate
+# Set the working directory
+WORKDIR /app
 
-Write a script that uses Fortigate’s API or CLI to block the malicious IPs dynamically.
-Automate this process so new IPs are added to the firewall’s blocklist regularly.
-Integrate Everything
+# Copy the malicious IPs file and the update script to the container
+COPY IPtoblock.txt /app/malicious_ips.txt
+COPY update_ips.py /app/update_ips.py
 
-Ensure Wazuh triggers the Fortigate block script when a new malicious IP is detected.
-Test the entire system to confirm that malicious IPs are detected and blocked.
-Logging and Monitoring
+# Install necessary packages
+RUN pip install --no-cache-dir pandas
 
-Implement logging in your scripts to track blocked IPs and actions.
-Use Wazuh dashboards to visualize blocked IPs and system status.
-Document the Project
+# Expose port 8080
+EXPOSE 8080
 
-Include code snippets, architecture diagrams, and screenshots.
-Optionally, create a video demo to showcase the project for your portfolio.
+# Start a Python web server that serves files from /app
+CMD ["python", "-m", "http.server", "8080"]
+Step 2: Ensure the Python Script Only Processes .csv Files
+Your update_ips.py script should already be set to process files with a .csv extension, but just to be sure, here’s the script again:
 
+update_ips.py:
 
-Technologies Involved:
-Honeypot (e.g., Cowrie, Dionaea)
-Python for scripting
-Wazuh SIEM for monitoring and alerting
-Fortigate API or CLI for firewall management
-Threat Intelligence APIs (e.g., AbuseIPDB)
-By following these steps, you’ll demonstrate skills in security automation, SIEM integration, and firewall management. Let me know if you need more help with any of the steps!
+python
+Copy code
+import os
+import pandas as pd
+
+# Directory where CSV files are stored
+csv_directory = '/app/csv_files'
+output_file = '/app/malicious_ips.txt'
+
+# Create a set to store unique IP addresses
+unique_ips = set()
+
+# Iterate through all CSV files in the specified directory
+for filename in os.listdir(csv_directory):
+    if filename.endswith('.csv'):  # Only process files ending with .csv
+        csv_path = os.path.join(csv_directory, filename)
+        try:
+            # Read the CSV file
+            df = pd.read_csv(csv_path)
+            # Extract IPs from the 'src_ip' column and add them to the set
+            if 'src_ip' in df.columns:
+                ips = df['src_ip'].dropna().unique()  # Get unique IPs
+                unique_ips.update(ips)
+        except Exception as e:
+            print(f"Error processing file {csv_path}: {e}")
+
+# Write the unique IPs to the output file
+with open(output_file, 'w') as file:
+    for ip in sorted(unique_ips):
+        file.write(f"{ip}\n")
+
+print("IP addresses updated successfully.")
+Step 3: Build the Docker Image
+Build your Docker image and name it ioc-server:
+
+bash
+Copy code
+docker build -t ioc-server .
+Step 4: Run the Docker Container
+When running the Docker container, make sure to mount the directory containing your .csv files to /app/csv_files. Here’s how to do it:
+
+bash
+Copy code
+docker run -d -p 8080:8080 -v /path/to/csv_files:/app/csv_files ioc-server
+Replace /path/to/csv_files with the actual path on your host where the CSV files are stored.
+
+Step 5: Set Up a Cron Job for Daily Updates
+To ensure the malicious_ips.txt file gets updated every day, you can set up a cron job on the host machine as mentioned earlier:
+
+Open the crontab editor:
+
+bash
+Copy code
+crontab -e
+Add a line to run the update script every day at a specific time (e.g., 2 AM):
+
+bash
+Copy code
+0 2 * * * docker exec ioc-server python /app/update_ips.py
+This command tells the cron job to execute the update_ips.py script inside the ioc-server container every day at 2 AM.
+
+Summary
+The script is set up to process only .csv files.
+The Docker image is built with the name ioc-server.
+A cron job is configured to run the update script daily.
+This setup will ensure your malicious_ips.txt file is updated every day with unique IP addresses from any new CSV files added to the specified directory.
