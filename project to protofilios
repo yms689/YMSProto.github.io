@@ -96,3 +96,7 @@ The script is set up to process only .csv files.
 The Docker image is built with the name ioc-server.
 A cron job is configured to run the update script daily.
 This setup will ensure your malicious_ips.txt file is updated every day with unique IP addresses from any new CSV files added to the specified directory.
+
+
+getting csv files for ioc and this is atuomated job that update the ip list to container and its update daily,
+next creat Wazug rule
