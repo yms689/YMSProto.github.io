@@ -1,152 +1,62 @@
-commands and code that used:
+Virtual Environment: FortiGate Firewall, Wazuh Server, and T-Pot Honeypot for Creating IOCs
+This project sets up a virtualized network environment using Hyper-V. It integrates a FortiGate firewall, Wazuh SIEM, and T-Pot honeypots for security monitoring. The goal is to collect malicious IPs detected by the honeypot and generate Indicators based on the data. These IOCs are then applied to the FortiGate firewall to block them.
 
+Project Overview
+This project demonstrates how to create IOC and ruled that detect them and block them and thought process to mitigate a response once activity detected.
 
-txt file that will host the IP address:
-stored on ubuntu that will host conataner for the file
+Lab that used to test and validate:
+1. Deploy FortiGate Virtual Firewall
+2. Set Up Wazuh Server
+3. Configure T-Pot Honeypot
+Deploy T-Pot honeypot on a cloud environment.
+Ensure it is collecting attack data and logging malicious IPs in CSV format (e.g., malicious-ip-detection.csv) with KQL 
+event_type :alert AND src_ip:* AND ip_rep :* AND alert.category:*
+saved to CSV
+4. Extract and Process Honeypot Data
+Use Python or Bash scripts to read the IPs from T-Pot's CSV log files and store them as Indicators of Compromise (IOC):
+Python Script:
+python
+Copy code
+import csv
 
-docker file to create the server that will host the file:
+csv_file = "malicious-ip-detection.csv"
+output_file = "IPtoblock.txt"
 
-# Use a lightweight Python image
-FROM python:3.9-slim
+unique_ips = set()
+with open(csv_file, 'r') as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        ip = row['src_ip']
+        unique_ips.add(ip)
 
-# Set the working directory
-WORKDIR /app
+with open(output_file, 'w') as file:
+    for ip in sorted(unique_ips):
+        file.write(f"{ip}\n")
+Bash Script:
+bash
+Copy code
+awk -F',' 'NR > 1 {print $2}' "malicious-ip-detection.csv" | sort | uniq > "IPtoblock.txt"
+5. Upload Malicious IPs to Firewall using txt file that stored in docker container( used container in the same server the store the Wazhu SIEM)
+Store the IPtoblock.txt file in Azure Blob Storage for easy access by the Wazuh server.
+6. Create Wazuh Rules for IOC Management
+Create custom rules in local_rules.xml on the Wazuh server to match malicious IPs.
+Sample Rule:
+xml
+Copy code
+<group name="custom">
+  <rule id="100200" level="10">
+    <match>malicious_ip</match>
+    <description>Detected malicious IP from T-Pot honeypot</description>
+    <options>no_full_log</options>
+    <action>exec</action>
+    <command>/usr/bin/python3 /path/to/block_ip_script.py %IP%</command>
+  </rule>
+</group>
+7. Set Up Wazuh Active Response
+Configure Wazuh’s active response mechanism to automatically block malicious IPs in FortiGate by using the extracted IOC data.
+8. Monitor Using Wazuh Dashboard
+Use the Wazuh dashboard to monitor the detection and response to attacks. You can create custom visualizations to track the following:
+Number of detected malicious IPs.
+Active response actions (e.g., IP blocks).
+Logs from T-Pot honeypots.
 
-# Copy the malicious IPs file to the container
-COPY malicious_ips.txt /app/malicious_ips.txt
-
-# Expose port 8080
-EXPOSE 8080
-
-# Start a Python web server that serves files from /app
-CMD ["python", "-m", "http.server", "8080"]
-
-build with command:
-
-docker build -t ip-blocklist-server .
-
-run the container 
-
-docker run ip-blocklist-server
--------------------------------------------------------------
-
-after that create the Policy in forti to block the the policy name is Protect with Threat Feed
-
-got the file hosted on the docker and part from active rule now to the Wzuh.
------------------------------------------------------------------------------------------------------------
-
-the rule for Wazuh is set with active response so that the IP can go thru the api,
-so added this to ossec.conf (for wazuh):
-<command>
-   <name>run-python-script</name>
-   <executable>/usr/bin/python3</executable>
-   <extra_args>/var/ossec/active-response/bin/IPAPI.py %ip%</extra_args>
-   <timeout_allowed>yes</timeout_allowed>
-</command>
-
-<active-response>
-  <command>run-python-script</command>  <!-- Name of the command created above -->
-  <location>any</location>
-  <rules_id>100200</rules_id>  <!-- The rule ID that triggers this active response -->
-  <timeout>60</timeout>  <!-- Set a timeout in seconds -->
-  <repeated_offenders>no</repeated_offenders>
-</active-response>
-
-------------------------------------------------------------------------------------------
-Api code for repution:
-
-import requests
-import requests
-import sys
-
-# Your AbuseIPDB API key
-API_KEY = 'API Key here'
-
-# Function to check IP against AbuseIPDB
-def check_ip(ip):
-    url = 'https://api.abuseipdb.com/api/v2/check'
-    headers = {
-        'Accept': 'application/json',
-        'Key': API_KEY
-    }
-    params = {
-        'ipAddress': ip,
-        'maxAgeInDays': 30  # Adjust as needed
-    }
-
-    response = requests.get(url, headers=headers, params=params)
-
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Error: {response.status_code} - {response.text}")
-        return None
-
-# Function to block IP (replace this with actual blocking logic for Fortigate)
-def block_ip(ip):
-    print(f"Blocking IP: {ip}")
-    # Add your Fortigate API blocking logic here
-
-# Main function
-def main():
-    if len(sys.argv) != 2:
-        print("Usage: check_ip_reputation.py <IP>")
-        sys.exit(1)
-
-    ip = sys.argv[1]
-    result = check_ip(ip)
-    
-    if result:
-        confidence_score = result['data']['abuseConfidenceScore']
-        print(f"Results for {ip}: {result}")
-
-        # Check the confidence score and block if necessary
-        if confidence_score > 50:  # Adjust the threshold as needed
-            print(f"{ip} is considered malicious (Score: {confidence_score}).")
-            block_ip(ip)  # Call the block IP function
-        else:
-            print(f"{ip} is not considered malicious (Score: {confidence_score}).")
-
-if __name__ == "__main__":
-    main()
-
-
-at this point we need to make sure that IP address are go thru this
--------------------------------------------------------------------------------------
-Created Tpot at cloud end:
-Before insatll make this conf:
-1.creat password to the user since we chagne the port of the ssh!
-2.make sure that you have conenctivty to ssh withot the key on 22 before install
-3. verify connection!
-4.Berfore reboot make sure you able to conenct via ssh at 64295!
-then reboot!
-I used tunnel with ssh to make the wazuh collecnt events from the Tpot with
-
-ssh -R 1514:localhost:1514 Pita@74.235.109.213 -p 64295
-
-*now need to make sure wazuh agent getting the IP address
--------------------------------------------------------------------------------------------------------------------
-
-The goal here is to traffic logs from honeypot at cloud env with Wazuh agent insatll (Remember to add the firewall rules both on forti and at cloud)
-
-so after making sure Wazuh is collected the IP and alert on them I need to preform this to fille the text file!
-Monitor the Python Script Output
-Ensure your Python script logs actions or prints results when it runs. If you’ve added a log or print statement to output the IP being processed, you can see this output in:
-
-The active response logs or wherever your script logs its output.
-Alternatively, add a logger to your Python script that writes results to a custom log file:
-with open('/var/ossec/logs/ip_processing.log', 'a') as f:
-    f.write(f"Processed IP: {ip}\n")
-
-
-
-
-
-
-
-
-
-
-
-----------------------
-if all is wokring as sholud try to hardning with firewall poilcy on neccesry ports only!
