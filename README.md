@@ -1,5 +1,7 @@
 Virtual Environment: FortiGate Firewall, Wazuh Server, and T-Pot Honeypot for Creating IOCs
 This project sets up a virtualized network environment using Hyper-V. It integrates a FortiGate firewall, Wazuh SIEM, and T-Pot honeypots for security monitoring. The goal is to collect malicious IPs detected by the honeypot and generate Indicators based on the data. These IOCs are then applied to the FortiGate firewall to block them.
+And create this enviorment in cloud, meaning presaeve the setup and create it with teraform,
+in the cloud the enviorment will hace the Wazuh server with the docker, take out the firewall ruls and build them in the cloud, creat client vm's in diffrent subnet(2 or just one web server) that have wazug agent and act as IPS/IDS to this web server.
 
 Project Overview
 This project demonstrates how to create IOC and ruled that detect them and block them and thought process to mitigate a response once activity detected.
