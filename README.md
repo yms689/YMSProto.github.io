@@ -26,8 +26,10 @@ In addition to the on-premises setup, this environment can be deployed in the cl
      ```sql
      event_type:alert AND src_ip:* AND ip_rep:* AND alert.category:*
      ```
+ 4. **Ldap server that monitor with Wazuh
+    
 
-4. **Extract and Process Honeypot Data**
+## Extract and Process Honeypot Data**
    - Use Python or Bash scripts to read IPs from T-Pot's CSV log files and store them as Indicators of Compromise (IOC).
 
    **Python Script:**
