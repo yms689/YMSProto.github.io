@@ -1,148 +1,142 @@
+Certainly! Here's a more natural, human-like rewrite of your portfolio project description:
+
+---
+
 ## **Portfolio: Detection and Prevention Lab Setup**
 
-### **Project Goal**
+### **Project Overview**
 
-The main objective of this project is to create a detection and prevention lab environment. In this setup:
+The goal of this project was to design and implement a detection and prevention lab that combines multiple security technologies. The focus was on integrating **Wazuh SIEM** with Indicators of Attack (IOA) and Indicators of Compromise (IOC) data. This data is automatically collected from CSV files, which are stored on a **Docker-based IOC Server**. The CSV files are generated from **Nessus vulnerability scans** of the DMZ zone and from a **cloud-hosted honeypot**.
 
-1. **Wazuh SIEM** is configured to take Indicators of Attack (IOA) and Indicators of Compromise (IOC) from CSV files.
-2. These CSV files are stored in a **Docker-based IOC Server**.
-3. Data for the CSV files is generated from **Nessus scans in the DMZ zone** and from **honeypot sensors** deployed in the cloud.
-4. The IOC Server updates daily, ensuring that Wazuh has a fresh list of malicious IPs for detection and blocking.
+The key objective was to ensure that the system could regularly update the list of malicious IPs, enabling Wazuh to detect and respond to potential threats in real time.
 
 ---
 
-### **Architecture Overview**
+### **Architecture and Setup**
 
-- **Environment**:  
-  - Wazuh SIEM is deployed and configured to handle IOC data.
-  - Docker-based IOC Server is set up to collect and manage malicious IPs.
-  - Nessus performs regular scans on the domain and generates CSV files with potential threats.
-  - A honeypot in the cloud collects attack data from malicious actors.
-  - Data is processed and integrated into Wazuh to enhance detection and prevention capabilities.
-
----
-
-### **Components**
+The lab setup involved several interconnected components:
 
 1. **Docker-based IOC Server**:
-   - A Docker container that updates the `malicious_ips.txt` file every day by processing CSV files containing malicious IPs.
-   - **Technologies**: Docker, Python, Pandas
-   - **Automation**: The Python script (`update_ips.py`) processes new CSV files, extracts IP addresses, and stores them in a list that is automatically integrated into Wazuh.
+    - The IOC Server is a **Docker container** that stores and updates a list of malicious IPs (`malicious_ips.txt`) every day. 
+    - CSV files containing IOA and IOC data are processed by a Python script that extracts unique IP addresses and updates the list. This list is then used by Wazuh to enhance its detection and response capabilities.
+    - **Technologies Used**: Docker, Python, Pandas library
 
-2. **Python Automation Script (update_ips.py)**:
-   - The script processes `.csv` files containing IOC and IOA data and adds unique IPs to a blacklist.
-   - **Functionality**: The script only processes files with a `.csv` extension, extracting malicious IPs and ensuring no duplicates.
-   
-   ```python
-   import os
-   import pandas as pd
+2. **Automated Python Script**:
+    - A Python script (`update_ips.py`) was developed to scan a directory for new `.csv` files and extract any malicious IP addresses. 
+    - The script ensures only `.csv` files are processed, and IP addresses are added to the `malicious_ips.txt` file without duplicates.
 
-   # Directory where CSV files are stored
-   csv_directory = '/app/csv_files'
-   output_file = '/app/malicious_ips.txt'
+    Here’s a simplified version of the script:
+    ```python
+    import os
+    import pandas as pd
 
-   # Create a set to store unique IP addresses
-   unique_ips = set()
+    # Specify directory containing the CSV files
+    csv_directory = '/app/csv_files'
+    output_file = '/app/malicious_ips.txt'
 
-   # Iterate through all CSV files in the specified directory
-   for filename in os.listdir(csv_directory):
-       if filename.endswith('.csv'):  # Only process files ending with .csv
-           csv_path = os.path.join(csv_directory, filename)
-           try:
-               # Read the CSV file
-               df = pd.read_csv(csv_path)
-               # Extract IPs from the 'src_ip' column and add them to the set
-               if 'src_ip' in df.columns:
-                   ips = df['src_ip'].dropna().unique()  # Get unique IPs
-                   unique_ips.update(ips)
-           except Exception as e:
-               print(f"Error processing file {csv_path}: {e}")
+    # Create a set to store unique IP addresses
+    unique_ips = set()
 
-   # Write the unique IPs to the output file
-   with open(output_file, 'w') as file:
-       for ip in sorted(unique_ips):
-           file.write(f"{ip}\n")
+    # Process each CSV file in the directory
+    for filename in os.listdir(csv_directory):
+        if filename.endswith('.csv'):
+            csv_path = os.path.join(csv_directory, filename)
+            try:
+                # Read the CSV file and extract unique IPs from the 'src_ip' column
+                df = pd.read_csv(csv_path)
+                if 'src_ip' in df.columns:
+                    ips = df['src_ip'].dropna().unique()
+                    unique_ips.update(ips)
+            except Exception as e:
+                print(f"Error processing file {csv_path}: {e}")
 
-   print("IP addresses updated successfully.")
-   ```
+    # Write the unique IPs to the output file
+    with open(output_file, 'w') as file:
+        for ip in sorted(unique_ips):
+            file.write(f"{ip}\n")
 
-3. **Docker Configuration**:
-   - The IOC server runs as a Docker container. CSV files containing IP data are mounted as a volume in the container, and the container is configured to process them every day via a cron job.
-   
-   **Dockerfile**:
-   ```dockerfile
-   FROM python:3.9-slim
-   WORKDIR /app
-   COPY IPtoblock.txt /app/malicious_ips.txt
-   COPY update_ips.py /app/update_ips.py
-   RUN pip install --no-cache-dir pandas
-   EXPOSE 8080
-   CMD ["python", "-m", "http.server", "8080"]
-   ```
-   
-   **Cron Job for Daily Updates**:
-   ```bash
-   0 2 * * * docker exec ioc-server python /app/update_ips.py
-   ```
+    print("IP addresses updated successfully.")
+    ```
+
+3. **Docker Setup**:
+    - The Docker container is configured to expose port 8080, allowing for access to the server that stores the malicious IP list. The CSV files are mounted as a volume inside the container so they can be processed by the Python script.
+    
+    Here’s the `Dockerfile` used:
+    ```dockerfile
+    FROM python:3.9-slim
+    WORKDIR /app
+    COPY IPtoblock.txt /app/malicious_ips.txt
+    COPY update_ips.py /app/update_ips.py
+    RUN pip install --no-cache-dir pandas
+    EXPOSE 8080
+    CMD ["python", "-m", "http.server", "8080"]
+    ```
+
+    - The container is run using the following command, which mounts the CSV files directory from the host:
+    ```bash
+    docker run -d -p 8080:8080 -v /path/to/csv_files:/app/csv_files ioc-server
+    ```
 
 4. **Nessus Vulnerability Scanning**:
-   - **Scanning Setup**: A Nessus scanner is set up in a DMZ zone created in FortiGate to scan the Active Directory domain.
-   - **Automation**: Nessus scans generate CSV reports of IOAs and IOCs, which are stored and processed by the Docker-based IOC server.
+    - A **Nessus vulnerability scanner** is deployed in a **DMZ zone** created using **FortiGate firewall** rules. The Nessus scans Active Directory and other systems, generating CSV reports with IOA and IOC data.
+    - These reports are automatically sent to the Docker-based IOC server for processing.
 
 5. **Wazuh Integration**:
-   - Wazuh is configured to read the `malicious_ips.txt` file updated by the Docker container.
-   - Custom Wazuh rules are created to alert and block IPs from the file.
-   
-   **Wazuh Custom Rule Example**:
-   ```xml
-   <group name="malicious_ips">
-       <rule id="100100" level="10">
-           <decoded_as>json</decoded_as>
-           <field name="src_ip">$(hostname)</field>
-           <description>Malicious IP detected from Nessus scan or honeypot.</description>
-           <mitre>
-               <id>T1071</id>
-           </mitre>
-       </rule>
-   </group>
-   ```
+    - **Wazuh SIEM** is set up to continuously monitor the `malicious_ips.txt` file. Whenever the file is updated, Wazuh loads the new IPs and uses them to generate alerts and block malicious traffic.
+    - A custom rule was written to alert on any traffic from IPs in the `malicious_ips.txt` list. This allows for real-time detection of threats and immediate prevention.
 
-6. **Cloud Honeypot**:
-   - A honeypot deployed in the cloud collects attack data.
-   - Collected data is converted into CSV format and passed to the IOC Server.
-   - **Technology**: T-Pot, AWS or Linode for hosting.
+    Example of a **Wazuh Rule**:
+    ```xml
+    <group name="malicious_ips">
+        <rule id="100100" level="10">
+            <decoded_as>json</decoded_as>
+            <field name="src_ip">$(hostname)</field>
+            <description>Malicious IP detected from Nessus scan or honeypot.</description>
+            <mitre>
+                <id>T1071</id>
+            </mitre>
+        </rule>
+    </group>
+    ```
 
-7. **Apache Directory Studio for Active Directory Management**:
-   - Used to join the domain, manage users, and perform administrative tasks related to Nessus scanning and threat detection.
+6. **Cloud-based Honeypot**:
+    - A honeypot is deployed in the cloud to attract and capture malicious activity. The honeypot logs are stored in CSV files, which are also processed by the Docker-based IOC server.
+    - **Technology Used**: T-Pot, hosted in AWS or Linode.
 
 ---
 
-### **Security Implementation:**
+### **Security Enhancements**
 
 - **DMZ Setup**:
-   - FortiGate firewall configured to isolate the Nessus scanner from the internal network, only allowing controlled traffic.
-   - Nessus scans the domain via a Kali Linux machine in the DMZ.
+    - A dedicated DMZ zone was created using FortiGate to isolate the Nessus scanner and honeypot from the internal network, while still allowing necessary traffic to flow between them.
+    
+- **IOA and IOC Automation**:
+    - The Python script and Docker container automate the entire process of collecting IOA and IOC data from Nessus and the honeypot, ensuring the `malicious_ips.txt` file is always up to date.
 
-- **IOA and IOC Management**:
-   - Automatically updated IP lists ensure Wazuh SIEM has up-to-date information on malicious actors, improving its ability to detect and respond to threats.
+- **Cron Job for Daily Updates**:
+    - A cron job was set up to run the Python script daily, ensuring that any new CSV files are processed and the malicious IP list is updated regularly.
 
----
-
-### **Project Outcomes**
-
-- **Daily Updates**: The malicious IP list is automatically updated from CSV files generated by Nessus scans and the honeypot.
-- **Wazuh Monitoring**: Real-time detection and prevention of malicious IPs through Wazuh SIEM.
-- **Scalability**: The architecture can be expanded to incorporate more data sources, such as additional honeypots or scanners.
-- **Automation**: The entire workflow is automated to reduce manual intervention.
+    Example cron job:
+    ```bash
+    0 2 * * * docker exec ioc-server python /app/update_ips.py
+    ```
 
 ---
 
-### **Next Steps**
+### **Results and Outcomes**
 
-- **Expand Data Sources**: Add more honeypots or scanners in other network zones.
-- **Enhance Rule Logic**: Refine Wazuh rules to trigger different levels of alerts based on the severity of the threat.
-- **Reporting**: Implement a dashboard for tracking the number of malicious IPs detected over time.
+- **Automated Detection**: Wazuh is now automatically ingesting malicious IP data every day, enhancing its ability to detect and block attacks in real time.
+- **Scalable Solution**: The Docker-based solution allows for easy scaling as additional data sources (e.g., more honeypots or vulnerability scanners) can be added with minimal configuration.
+- **Enhanced Security Posture**: By combining Nessus, honeypots, Docker, and Wazuh, this setup ensures continuous monitoring, detection, and prevention of threats to the network.
 
 ---
 
-This structured portfolio highlights the technical aspects of your detection and prevention lab while showcasing the use of Docker, Python automation, Nessus scanning, cloud-based honeypots, and Wazuh integration. Let me know if you need more details on specific areas!
+### **Future Improvements**
+
+- **More Honeypots**: Expanding the number of honeypots across different network segments to capture more detailed attack data.
+- **Enhanced Reporting**: Creating a dashboard to track the number of malicious IPs blocked over time and visualizing trends in attacks.
+- **Custom Alerts**: Refining Wazuh alerts to categorize threats based on severity for quicker response.
+
+---
+
+This approach provides a clear, hands-on demonstration of your expertise in automating threat detection and prevention using modern tools and techniques like Docker, Python scripting, Wazuh SIEM, and vulnerability scanners.
