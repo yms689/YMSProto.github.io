@@ -1,8 +1,5 @@
 To ensure that the Docker container updates the malicious_ips.txt file every time it finds a file with the .csv extension, you can modify the update_ips.py script to process only files ending with .csv. Additionally, you'll run the container using the name ioc-server. Here’s how you can set everything up:
 
-Step 1: Update the Dockerfile (if not already done)
-Make sure your Dockerfile looks like this (including the update_ips.py script):
-
 Dockerfile:
 
 dockerfile
