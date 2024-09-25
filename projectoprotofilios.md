@@ -1,6 +1,3 @@
-
----
-
 ## **Portfolio: Detection and Prevention Lab Setup**
 
 ### **Project Goal**
