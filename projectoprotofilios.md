@@ -1,7 +1,3 @@
-Certainly! Here's a more natural, human-like rewrite of your portfolio project description:
-
----
-
 ## **Portfolio: Detection and Prevention Lab Setup**
 
 ### **Project Overview**
