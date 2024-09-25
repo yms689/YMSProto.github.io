@@ -1,4 +1,3 @@
-To build your portfolio based on the project you described, we can structure it into different sections. Here’s a template that includes all the key elements:
 
 ---
 
